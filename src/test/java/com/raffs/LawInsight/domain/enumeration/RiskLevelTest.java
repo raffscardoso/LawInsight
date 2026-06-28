@@ -28,4 +28,19 @@ class RiskLevelTest {
                 IllegalArgumentException.class,
                 () -> RiskLevel.valueOf("UNKNOWN"));
     }
+
+    @Test
+    void shouldHaveSeverityValuesInOrder() {
+        assertThat(RiskLevel.LOW.getSeverity()).isEqualTo(1);
+        assertThat(RiskLevel.MEDIUM.getSeverity()).isEqualTo(2);
+        assertThat(RiskLevel.HIGH.getSeverity()).isEqualTo(3);
+        assertThat(RiskLevel.CRITICAL.getSeverity()).isEqualTo(4);
+    }
+
+    @Test
+    void shouldCompareSeverityCorrectly() {
+        assertThat(RiskLevel.HIGH.getSeverity()).isGreaterThan(RiskLevel.LOW.getSeverity());
+        assertThat(RiskLevel.CRITICAL.getSeverity()).isGreaterThan(RiskLevel.MEDIUM.getSeverity());
+        assertThat(RiskLevel.MEDIUM.getSeverity()).isGreaterThan(RiskLevel.LOW.getSeverity());
+    }
 }
