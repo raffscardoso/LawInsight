@@ -16,8 +16,10 @@ spring:
     database-platform: org.hibernate.dialect.PostgreSQLDialect
     hibernate:
       ddl-auto: validate
+    show-sql: false
     properties:
       hibernate:
+        format_sql: false
         jdbc:
           batch_size: 25
           batch_versioned_data: true
