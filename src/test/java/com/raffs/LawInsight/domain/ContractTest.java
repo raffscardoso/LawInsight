@@ -7,6 +7,10 @@ import com.raffs.LawInsight.domain.enumeration.UserRole;
 import com.raffs.LawInsight.repository.ClientRepository;
 import com.raffs.LawInsight.repository.ContractRepository;
 import com.raffs.LawInsight.repository.UserRepository;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+import org.hibernate.SessionFactory;
+import org.hibernate.stat.Statistics;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,6 +25,9 @@ class ContractTest {
 
     @Autowired
     private ContractRepository contractRepository;
+
+    @PersistenceContext
+    private EntityManager entityManager;
 
     @Autowired
     private UserRepository userRepository;
@@ -113,5 +120,25 @@ class ContractTest {
         var saved = contractRepository.save(contract);
 
         assertThat(saved.getStatus()).isEqualTo(ContractStatus.PROCESSED);
+    }
+
+    @Test
+    void shouldFetchAssociationsInSingleQuery() {
+        var contract = createValidContract();
+        contractRepository.saveAndFlush(contract);
+        entityManager.clear();
+
+        var stats = entityManager.getEntityManagerFactory()
+                .unwrap(SessionFactory.class).getStatistics();
+        stats.clear();
+
+        var contracts = contractRepository.findByStatus(ContractStatus.UPLOADED);
+
+        assertThat(contracts).hasSize(1);
+        assertThat(contracts.get(0).getUploadedBy().getEmail())
+                .isEqualTo("contract-attorney@lawfirm.com");
+        assertThat(contracts.get(0).getClient().getName())
+                .isEqualTo("Tech Startup Ltda");
+        assertThat(stats.getQueryExecutionCount()).isEqualTo(1);
     }
 }
