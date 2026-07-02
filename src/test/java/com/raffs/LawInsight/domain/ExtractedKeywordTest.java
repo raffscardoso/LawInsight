@@ -9,6 +9,10 @@ import com.raffs.LawInsight.repository.ClientRepository;
 import com.raffs.LawInsight.repository.ContractRepository;
 import com.raffs.LawInsight.repository.ExtractedKeywordRepository;
 import com.raffs.LawInsight.repository.UserRepository;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+import org.hibernate.SessionFactory;
+import org.hibernate.stat.Statistics;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,6 +38,9 @@ class ExtractedKeywordTest {
 
     @Autowired
     private ClientRepository clientRepository;
+
+    @PersistenceContext
+    private EntityManager entityManager;
 
     private Contract contract;
 
@@ -176,5 +183,27 @@ class ExtractedKeywordTest {
 
         assertThat(results).hasSize(1);
         assertThat(results.get(0).getValue()).isEqualTo("SP");
+    }
+
+    @Test
+    void shouldFetchContractAssociationInSingleQuery() {
+        var kw = new ExtractedKeyword();
+        kw.setKeyword("nplusone");
+        kw.setValue("true");
+        kw.setType(KeywordType.OTHER);
+        kw.setConfidence(0.99);
+        kw.setContract(contract);
+        extractedKeywordRepository.saveAndFlush(kw);
+        entityManager.clear();
+
+        var stats = entityManager.getEntityManagerFactory()
+                .unwrap(SessionFactory.class).getStatistics();
+        stats.clear();
+
+        var keywords = extractedKeywordRepository.findByContractId(contract.getId());
+
+        assertThat(keywords).hasSize(1);
+        assertThat(keywords.get(0).getContract().getTitle()).isEqualTo("Test Agreement");
+        assertThat(stats.getQueryExecutionCount()).isEqualTo(1);
     }
 }

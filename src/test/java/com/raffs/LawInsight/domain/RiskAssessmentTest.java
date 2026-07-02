@@ -11,6 +11,10 @@ import com.raffs.LawInsight.repository.ContractClauseRepository;
 import com.raffs.LawInsight.repository.ContractRepository;
 import com.raffs.LawInsight.repository.RiskAssessmentRepository;
 import com.raffs.LawInsight.repository.UserRepository;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+import org.hibernate.SessionFactory;
+import org.hibernate.stat.Statistics;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,6 +45,9 @@ class RiskAssessmentTest {
 
     @Autowired
     private ClientRepository clientRepository;
+
+    @PersistenceContext
+    private EntityManager entityManager;
 
     private Contract contract;
     private ContractClause clause;
@@ -212,5 +219,29 @@ class RiskAssessmentTest {
 
         assertThat(results).hasSize(1);
         assertThat(results.get(0).getDescription()).contains("Financial");
+    }
+
+    @Test
+    void shouldFetchAssociationsInSingleQuery() {
+        var assessment = new RiskAssessment();
+        assessment.setType(RiskAssessmentType.CLAUSE_RISK);
+        assessment.setRiskLevel(RiskLevel.HIGH);
+        assessment.setDescription("N+1 test");
+        assessment.setAssessedAt(Instant.now());
+        assessment.setContract(contract);
+        assessment.setContractClause(clause);
+        riskAssessmentRepository.saveAndFlush(assessment);
+        entityManager.clear();
+
+        var stats = entityManager.getEntityManagerFactory()
+                .unwrap(SessionFactory.class).getStatistics();
+        stats.clear();
+
+        var assessments = riskAssessmentRepository.findByContractId(contract.getId());
+
+        assertThat(assessments).hasSize(1);
+        assertThat(assessments.get(0).getContract().getTitle()).isEqualTo("Test Agreement");
+        assertThat(assessments.get(0).getContractClause().getTitle()).isEqualTo("Indemnification");
+        assertThat(stats.getQueryExecutionCount()).isEqualTo(1);
     }
 }

@@ -9,6 +9,10 @@ import com.raffs.LawInsight.repository.ClientRepository;
 import com.raffs.LawInsight.repository.ContractClauseRepository;
 import com.raffs.LawInsight.repository.ContractRepository;
 import com.raffs.LawInsight.repository.UserRepository;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+import org.hibernate.SessionFactory;
+import org.hibernate.stat.Statistics;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,6 +38,9 @@ class ContractClauseTest {
 
     @Autowired
     private ClientRepository clientRepository;
+
+    @PersistenceContext
+    private EntityManager entityManager;
 
     private Contract contract;
 
@@ -155,5 +162,27 @@ class ContractClauseTest {
 
         assertThat(highClauses).hasSize(1);
         assertThat(highClauses.get(0).getTitle()).isEqualTo("High Risk");
+    }
+
+    @Test
+    void shouldFetchContractAssociationInSingleQuery() {
+        var clause = new ContractClause();
+        clause.setNumber(1);
+        clause.setTitle("N+1 Test");
+        clause.setContent("Test content");
+        clause.setRiskLevel(RiskLevel.LOW);
+        clause.setContract(contract);
+        contractClauseRepository.saveAndFlush(clause);
+        entityManager.clear();
+
+        var stats = entityManager.getEntityManagerFactory()
+                .unwrap(SessionFactory.class).getStatistics();
+        stats.clear();
+
+        var clauses = contractClauseRepository.findByContractIdOrderByNumber(contract.getId());
+
+        assertThat(clauses).hasSize(1);
+        assertThat(clauses.get(0).getContract().getTitle()).isEqualTo("Test Agreement");
+        assertThat(stats.getQueryExecutionCount()).isEqualTo(1);
     }
 }

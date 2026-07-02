@@ -8,6 +8,10 @@ import com.raffs.LawInsight.repository.ClientRepository;
 import com.raffs.LawInsight.repository.ContractPartyRepository;
 import com.raffs.LawInsight.repository.ContractRepository;
 import com.raffs.LawInsight.repository.UserRepository;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+import org.hibernate.SessionFactory;
+import org.hibernate.stat.Statistics;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,6 +37,9 @@ class ContractPartyTest {
 
     @Autowired
     private ClientRepository clientRepository;
+
+    @PersistenceContext
+    private EntityManager entityManager;
 
     private Contract contract;
 
@@ -146,5 +153,25 @@ class ContractPartyTest {
 
         assertThat(signatories).hasSize(1);
         assertThat(signatories.get(0).getName()).isEqualTo("Signatory Inc");
+    }
+
+    @Test
+    void shouldFetchContractAssociationInSingleQuery() {
+        var party = new ContractParty();
+        party.setName("N+1 Corp");
+        party.setRoleInContract("Provider");
+        party.setContract(contract);
+        contractPartyRepository.saveAndFlush(party);
+        entityManager.clear();
+
+        var stats = entityManager.getEntityManagerFactory()
+                .unwrap(SessionFactory.class).getStatistics();
+        stats.clear();
+
+        var parties = contractPartyRepository.findByContractId(contract.getId());
+
+        assertThat(parties).hasSize(1);
+        assertThat(parties.get(0).getContract().getTitle()).isEqualTo("Test Agreement");
+        assertThat(stats.getQueryExecutionCount()).isEqualTo(1);
     }
 }
