@@ -7,6 +7,7 @@ import com.raffs.LawInsight.domain.enumeration.UserRole;
 import com.raffs.LawInsight.repository.ClientRepository;
 import com.raffs.LawInsight.repository.ContractRepository;
 import com.raffs.LawInsight.repository.UserRepository;
+import com.raffs.LawInsight.util.TestDataFactory;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import org.hibernate.SessionFactory;
@@ -46,13 +47,9 @@ class ContractTest {
         clientRepository.deleteAll();
         userRepository.deleteAll();
 
-        attorney = new User();
-        attorney.setEmail("contract-attorney@lawfirm.com");
-        attorney.setPassword("$2a$10$dummyBcryptHash");
+        attorney = userRepository.save(TestDataFactory.createUser("contract-attorney"));
         attorney.setFirstName("Jane");
         attorney.setLastName("Smith");
-        attorney.setBarNumber("OAB-999888");
-        attorney.setRole(UserRole.ATTORNEY);
         attorney = userRepository.save(attorney);
 
         client = new Client();

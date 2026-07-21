@@ -1,14 +1,11 @@
 package com.raffs.LawInsight.domain;
 
-import com.raffs.LawInsight.domain.enumeration.ClientType;
-import com.raffs.LawInsight.domain.enumeration.ContractStatus;
-import com.raffs.LawInsight.domain.enumeration.FileType;
 import com.raffs.LawInsight.domain.enumeration.RiskLevel;
-import com.raffs.LawInsight.domain.enumeration.UserRole;
 import com.raffs.LawInsight.repository.ClientRepository;
 import com.raffs.LawInsight.repository.ContractClauseRepository;
 import com.raffs.LawInsight.repository.ContractRepository;
 import com.raffs.LawInsight.repository.UserRepository;
+import com.raffs.LawInsight.util.TestDataFactory;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import org.hibernate.SessionFactory;
@@ -51,32 +48,13 @@ class ContractClauseTest {
         clientRepository.deleteAll();
         userRepository.deleteAll();
 
-        var attorney = new User();
-        attorney.setEmail("clause-test@lawfirm.com");
-        attorney.setPassword("$2a$10$dummyBcryptHash");
-        attorney.setFirstName("Test");
-        attorney.setLastName("User");
-        attorney.setBarNumber("OAB-CLAUSE");
-        attorney.setRole(UserRole.ATTORNEY);
-        attorney = userRepository.save(attorney);
-
-        var client = new Client();
-        client.setName("Clause Test Client");
-        client.setClientType(ClientType.COMPANY);
-        client.setEmail("clause-client@test.com");
-        client.setDocumentNumber("11.111.111/0001-11");
-        client = clientRepository.save(client);
-
-        contract = new Contract();
-        contract.setTitle("Test Agreement");
-        contract.setOriginalFileName("test.pdf");
-        contract.setFileType(FileType.PDF);
-        contract.setExtractedContent("Test content");
-        contract.setFileHash("0000000000000000000000000000000000000000000000000000000000000000");
-        contract.setStatus(ContractStatus.UPLOADED);
-        contract.setUploadedBy(attorney);
-        contract.setClient(client);
-        contract = contractRepository.save(contract);
+        var attorney = userRepository.save(TestDataFactory.createUser("clause-test"));
+        var client = clientRepository.save(
+                TestDataFactory.createClient("clause-test", "11.111.111/0001-11"));
+        contract = contractRepository.save(
+                TestDataFactory.createContract(
+                        "0000000000000000000000000000000000000000000000000000000000000000",
+                        attorney, client));
     }
 
     @Test

@@ -1,16 +1,13 @@
 package com.raffs.LawInsight.domain;
 
-import com.raffs.LawInsight.domain.enumeration.ClientType;
-import com.raffs.LawInsight.domain.enumeration.ContractStatus;
-import com.raffs.LawInsight.domain.enumeration.FileType;
 import com.raffs.LawInsight.domain.enumeration.RiskAssessmentType;
 import com.raffs.LawInsight.domain.enumeration.RiskLevel;
-import com.raffs.LawInsight.domain.enumeration.UserRole;
 import com.raffs.LawInsight.repository.ClientRepository;
 import com.raffs.LawInsight.repository.ContractClauseRepository;
 import com.raffs.LawInsight.repository.ContractRepository;
 import com.raffs.LawInsight.repository.RiskAssessmentRepository;
 import com.raffs.LawInsight.repository.UserRepository;
+import com.raffs.LawInsight.util.TestDataFactory;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import org.hibernate.SessionFactory;
@@ -60,40 +57,18 @@ class RiskAssessmentTest {
         clientRepository.deleteAll();
         userRepository.deleteAll();
 
-        var attorney = new User();
-        attorney.setEmail("risk-test@lawfirm.com");
-        attorney.setPassword("$2a$10$dummyBcryptHash");
-        attorney.setFirstName("Risk");
-        attorney.setLastName("Test");
-        attorney.setBarNumber("OAB-RISK");
-        attorney.setRole(UserRole.ATTORNEY);
-        attorney = userRepository.save(attorney);
+        var attorney = userRepository.save(TestDataFactory.createUser("risk-test"));
+        var client = clientRepository.save(
+                TestDataFactory.createClient("risk-test", "44.444.444/0001-44"));
+        contract = contractRepository.save(
+                TestDataFactory.createContract(
+                        "3333333333333333333333333333333333333333333333333333333333333333",
+                        attorney, client));
 
-        var client = new Client();
-        client.setName("Risk Test Client");
-        client.setClientType(ClientType.COMPANY);
-        client.setEmail("risk-client@test.com");
-        client.setDocumentNumber("44.444.444/0001-44");
-        client = clientRepository.save(client);
-
-        contract = new Contract();
-        contract.setTitle("Test Agreement");
-        contract.setOriginalFileName("test.pdf");
-        contract.setFileType(FileType.PDF);
-        contract.setExtractedContent("Test content");
-        contract.setFileHash("3333333333333333333333333333333333333333333333333333333333333333");
-        contract.setStatus(ContractStatus.UPLOADED);
-        contract.setUploadedBy(attorney);
-        contract.setClient(client);
-        contract = contractRepository.save(contract);
-
-        clause = new ContractClause();
-        clause.setNumber(5);
-        clause.setTitle("Indemnification");
-        clause.setContent("Party A shall indemnify Party B against all losses.");
-        clause.setRiskLevel(RiskLevel.HIGH);
-        clause.setContract(contract);
-        clause = contractClauseRepository.save(clause);
+        clause = contractClauseRepository.save(
+                TestDataFactory.createClause(5, "Indemnification",
+                        "Party A shall indemnify Party B against all losses.",
+                        RiskLevel.HIGH, contract));
     }
 
     @Test

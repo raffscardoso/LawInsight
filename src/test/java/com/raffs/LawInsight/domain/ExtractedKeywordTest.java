@@ -1,14 +1,11 @@
 package com.raffs.LawInsight.domain;
 
-import com.raffs.LawInsight.domain.enumeration.ClientType;
-import com.raffs.LawInsight.domain.enumeration.ContractStatus;
-import com.raffs.LawInsight.domain.enumeration.FileType;
 import com.raffs.LawInsight.domain.enumeration.KeywordType;
-import com.raffs.LawInsight.domain.enumeration.UserRole;
 import com.raffs.LawInsight.repository.ClientRepository;
 import com.raffs.LawInsight.repository.ContractRepository;
 import com.raffs.LawInsight.repository.ExtractedKeywordRepository;
 import com.raffs.LawInsight.repository.UserRepository;
+import com.raffs.LawInsight.util.TestDataFactory;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import org.hibernate.SessionFactory;
@@ -51,32 +48,13 @@ class ExtractedKeywordTest {
         clientRepository.deleteAll();
         userRepository.deleteAll();
 
-        var attorney = new User();
-        attorney.setEmail("kw-test@lawfirm.com");
-        attorney.setPassword("$2a$10$dummyBcryptHash");
-        attorney.setFirstName("KW");
-        attorney.setLastName("Test");
-        attorney.setBarNumber("OAB-KEYWORD");
-        attorney.setRole(UserRole.ATTORNEY);
-        attorney = userRepository.save(attorney);
-
-        var client = new Client();
-        client.setName("KW Test Client");
-        client.setClientType(ClientType.COMPANY);
-        client.setEmail("kw-client@test.com");
-        client.setDocumentNumber("33.333.333/0001-33");
-        client = clientRepository.save(client);
-
-        contract = new Contract();
-        contract.setTitle("Test Agreement");
-        contract.setOriginalFileName("test.pdf");
-        contract.setFileType(FileType.PDF);
-        contract.setExtractedContent("Test content");
-        contract.setFileHash("2222222222222222222222222222222222222222222222222222222222222222");
-        contract.setStatus(ContractStatus.UPLOADED);
-        contract.setUploadedBy(attorney);
-        contract.setClient(client);
-        contract = contractRepository.save(contract);
+        var attorney = userRepository.save(TestDataFactory.createUser("kw-test"));
+        var client = clientRepository.save(
+                TestDataFactory.createClient("kw-test", "33.333.333/0001-33"));
+        contract = contractRepository.save(
+                TestDataFactory.createContract(
+                        "2222222222222222222222222222222222222222222222222222222222222222",
+                        attorney, client));
     }
 
     @Test
