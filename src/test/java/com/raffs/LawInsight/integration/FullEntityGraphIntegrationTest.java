@@ -201,9 +201,10 @@ class FullEntityGraphIntegrationTest {
 
     @Test
     void shouldCascadeDeleteContractToChildren() {
-        contractClauseRepository.save(createClause());
+        var clause = contractClauseRepository.save(createClause());
         contractPartyRepository.save(createParty());
         extractedKeywordRepository.save(createKeyword());
+        riskAssessmentRepository.save(createAssessment(clause));
         contractRepository.delete(contract);
 
         entityManager.clear();
