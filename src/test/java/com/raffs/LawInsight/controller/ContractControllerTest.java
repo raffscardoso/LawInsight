@@ -10,6 +10,7 @@ import com.raffs.LawInsight.service.ContractService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
@@ -22,6 +23,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -107,6 +109,20 @@ class ContractControllerTest {
     void shouldFindByStatus() throws Exception {
         mockMvc.perform(get("/api/v1/contracts").param("status", "UPLOADED"))
                 .andExpect(status().isOk());
+    }
+
+    @Test
+    void shouldUploadContract() throws Exception {
+        when(contractService.uploadContract(any(), any(), any(), any())).thenReturn(new ContractResponse());
+
+        var file = new MockMultipartFile("file", "contract.pdf", "application/pdf", "dummy".getBytes());
+
+        mockMvc.perform(multipart("/api/v1/contracts/upload")
+                        .file(file)
+                        .param("uploadedById", "1")
+                        .param("clientId", "1")
+                        .param("title", "Uploaded Contract"))
+                .andExpect(status().isCreated());
     }
 
     @Test

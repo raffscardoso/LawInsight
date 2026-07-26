@@ -15,6 +15,7 @@ import com.raffs.LawInsight.repository.ClientRepository;
 import com.raffs.LawInsight.repository.ContractRepository;
 import com.raffs.LawInsight.repository.UserRepository;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -30,6 +31,8 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import org.springframework.mock.web.MockMultipartFile;
+
 @ExtendWith(MockitoExtension.class)
 class ContractServiceTest {
 
@@ -44,6 +47,9 @@ class ContractServiceTest {
 
     @Mock
     private ContractMapper contractMapper;
+
+    @Mock
+    private PdfExtractionService pdfExtractionService;
 
     @InjectMocks
     private ContractService contractService;
@@ -197,6 +203,43 @@ class ContractServiceTest {
         assertThatThrownBy(() -> contractService.deleteContract(99L))
                 .isInstanceOf(ResourceNotFoundException.class)
                 .hasMessageContaining("Contract not found");
+    }
+
+    @Test
+    void shouldUploadContract() throws Exception {
+        var user = createUser();
+        var client = createClient();
+        var file = new MockMultipartFile("file", "agreement.pdf", "application/pdf", "dummy content".getBytes());
+
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(clientRepository.findById(1L)).thenReturn(Optional.of(client));
+        when(pdfExtractionService.extractText(any())).thenReturn("extracted");
+        when(contractMapper.toEntity(any(ContractRequest.class), any(User.class), any(Client.class))).thenAnswer(invocation -> {
+            var req = invocation.<ContractRequest>getArgument(0);
+            var c = new Contract();
+            c.setTitle(req.getTitle());
+            c.setFileHash(req.getFileHash());
+            c.setStatus(req.getStatus());
+            c.setUploadedBy(invocation.getArgument(1));
+            c.setClient(invocation.getArgument(2));
+            return c;
+        });
+        when(contractRepository.save(any(Contract.class))).thenAnswer(invocation -> {
+            var c = invocation.<Contract>getArgument(0);
+            ReflectionTestUtils.setField(c, "id", 1L);
+            return c;
+        });
+        when(contractMapper.toResponse(any(Contract.class))).thenReturn(new ContractResponse());
+
+        var result = contractService.uploadContract(file, 1L, 1L, "Custom Title");
+
+        assertThat(result).isNotNull();
+        var captor = ArgumentCaptor.forClass(Contract.class);
+        verify(contractRepository).save(captor.capture());
+        var saved = captor.getValue();
+        assertThat(saved.getTitle()).isEqualTo("Custom Title");
+        assertThat(saved.getStatus()).isEqualTo(ContractStatus.UPLOADED);
+        assertThat(saved.getFileHash()).hasSize(64);
     }
 
     @Test
