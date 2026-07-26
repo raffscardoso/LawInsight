@@ -1,0 +1,136 @@
+package com.raffs.LawInsight.controller;
+
+import com.raffs.LawInsight.domain.enumeration.ContractStatus;
+import com.raffs.LawInsight.domain.enumeration.FileType;
+import com.raffs.LawInsight.dto.ContractRequest;
+import com.raffs.LawInsight.dto.ContractResponse;
+import com.raffs.LawInsight.dto.ErrorResponse;
+import com.raffs.LawInsight.exception.ResourceNotFoundException;
+import com.raffs.LawInsight.service.ContractService;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.http.MediaType;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+
+import java.util.List;
+
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+class ContractControllerTest {
+
+    private final ContractService contractService = mock(ContractService.class);
+    private MockMvc mockMvc;
+
+    @BeforeEach
+    void setUp() {
+        mockMvc = MockMvcBuilders.standaloneSetup(new ContractController(contractService))
+                .setControllerAdvice(new GlobalExceptionHandler())
+                .build();
+    }
+
+    @Test
+    void shouldCreateContract() throws Exception {
+        var request = new ContractRequest();
+        request.setTitle("Test");
+        request.setOriginalFileName("doc.pdf");
+        request.setFileType(FileType.PDF);
+        request.setExtractedContent("content");
+        request.setFileHash("a".repeat(64));
+        request.setUploadedById(1L);
+        request.setClientId(1L);
+
+        when(contractService.createContract(any())).thenReturn(new ContractResponse());
+
+        var json = """
+                {
+                    "title": "Test",
+                    "originalFileName": "doc.pdf",
+                    "fileType": "PDF",
+                    "extractedContent": "content",
+                    "fileHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                    "uploadedById": 1,
+                    "clientId": 1
+                }
+                """;
+
+        mockMvc.perform(post("/api/v1/contracts")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json))
+                .andExpect(status().isCreated());
+    }
+
+    @Test
+    void shouldReturn400WhenRequestInvalid() throws Exception {
+        var json = "{}";
+
+        mockMvc.perform(post("/api/v1/contracts")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void shouldFindById() throws Exception {
+        when(contractService.findById(1L)).thenReturn(new ContractResponse());
+
+        mockMvc.perform(get("/api/v1/contracts/1"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void shouldReturn404WhenNotFound() throws Exception {
+        when(contractService.findById(99L)).thenThrow(new ResourceNotFoundException("Contract not found with id: 99"));
+
+        mockMvc.perform(get("/api/v1/contracts/99"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.status").value(404));
+    }
+
+    @Test
+    void shouldFindAll() throws Exception {
+        mockMvc.perform(get("/api/v1/contracts"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void shouldFindByStatus() throws Exception {
+        mockMvc.perform(get("/api/v1/contracts").param("status", "UPLOADED"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void shouldDeleteContract() throws Exception {
+        mockMvc.perform(delete("/api/v1/contracts/1"))
+                .andExpect(status().isNoContent());
+    }
+
+    @Test
+    void shouldReturn404WhenDeletingNotFound() throws Exception {
+        doThrow(new ResourceNotFoundException("Contract not found with id: 99"))
+                .when(contractService).deleteContract(99L);
+
+        mockMvc.perform(delete("/api/v1/contracts/99"))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void shouldUpdateStatus() throws Exception {
+        when(contractService.updateStatus(eq(1L), eq(ContractStatus.PROCESSED)))
+                .thenReturn(new ContractResponse());
+
+        mockMvc.perform(patch("/api/v1/contracts/1/status")
+                        .param("status", "PROCESSED"))
+                .andExpect(status().isOk());
+    }
+}
