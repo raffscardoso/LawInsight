@@ -4,6 +4,7 @@ import com.raffs.LawInsight.domain.Contract;
 import com.raffs.LawInsight.domain.enumeration.ContractStatus;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -11,6 +12,9 @@ import java.util.Optional;
 
 @Repository
 public interface ContractRepository extends JpaRepository<Contract, Long> {
+
+    @Query("SELECT c FROM Contract c LEFT JOIN FETCH c.uploadedBy LEFT JOIN FETCH c.client WHERE c.id = :id")
+    Optional<Contract> findByIdWithDetails(Long id);
 
     @EntityGraph(attributePaths = {"uploadedBy", "client"})
     List<Contract> findByStatus(ContractStatus status);
