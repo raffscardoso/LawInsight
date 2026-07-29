@@ -23,6 +23,8 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import org.springframework.security.crypto.password.PasswordEncoder;
+
 @ExtendWith(MockitoExtension.class)
 class UserServiceTest {
 
@@ -31,6 +33,9 @@ class UserServiceTest {
 
     @Mock
     private UserMapper userMapper;
+
+    @Mock
+    private PasswordEncoder passwordEncoder;
 
     @InjectMocks
     private UserService userService;
@@ -57,11 +62,14 @@ class UserServiceTest {
         var saved = createUser();
         when(userRepository.existsByEmail("new@law.com")).thenReturn(false);
         when(userMapper.toEntity(request)).thenReturn(saved);
+        when(passwordEncoder.encode("secret")).thenReturn("$2a$10$encodedHash");
         when(userRepository.save(saved)).thenReturn(saved);
         when(userMapper.toResponse(saved)).thenReturn(new UserResponse());
 
         var result = userService.create(request);
         assertThat(result).isNotNull();
+        verify(passwordEncoder).encode("secret");
+        assertThat(saved.getPassword()).isEqualTo("$2a$10$encodedHash");
     }
 
     @Test

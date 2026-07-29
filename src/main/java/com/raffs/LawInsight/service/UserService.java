@@ -7,6 +7,7 @@ import com.raffs.LawInsight.exception.ResourceNotFoundException;
 import com.raffs.LawInsight.mapper.UserMapper;
 import com.raffs.LawInsight.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,6 +19,7 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final UserMapper userMapper;
+    private final PasswordEncoder passwordEncoder;
 
     @Transactional
     public UserResponse create(UserRequest request) {
@@ -25,6 +27,7 @@ public class UserService {
             throw new IllegalArgumentException("Email already in use: " + request.getEmail());
         }
         var user = userMapper.toEntity(request);
+        user.setPassword(passwordEncoder.encode(request.getPassword()));
         user = userRepository.save(user);
         return userMapper.toResponse(user);
     }
