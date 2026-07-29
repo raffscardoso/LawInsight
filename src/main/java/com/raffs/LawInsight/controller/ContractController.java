@@ -1,6 +1,7 @@
 package com.raffs.LawInsight.controller;
 
 import com.raffs.LawInsight.domain.enumeration.ContractStatus;
+import com.raffs.LawInsight.domain.enumeration.FileType;
 import com.raffs.LawInsight.dto.ContractRequest;
 import com.raffs.LawInsight.dto.ContractResponse;
 import com.raffs.LawInsight.dto.ContractSummary;
@@ -64,6 +65,18 @@ public class ContractController {
             return ResponseEntity.ok(contractService.findByStatus(status, pageable));
         }
         return ResponseEntity.ok(contractService.findAll(pageable));
+    }
+
+    @GetMapping("/search")
+    public ResponseEntity<Page<ContractSummary>> search(
+            @RequestParam(required = false) String title,
+            @RequestParam(required = false) ContractStatus status,
+            @RequestParam(required = false) FileType fileType,
+            @RequestParam(required = false) Long clientId,
+            @RequestParam(required = false) Long uploadedById,
+            @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+        var result = contractService.searchContracts(title, status, fileType, clientId, uploadedById, pageable);
+        return ResponseEntity.ok(result);
     }
 
     @DeleteMapping("/{id}")

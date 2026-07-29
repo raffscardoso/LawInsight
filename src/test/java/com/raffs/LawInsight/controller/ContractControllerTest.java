@@ -119,6 +119,21 @@ class ContractControllerTest {
     }
 
     @Test
+    void shouldSearchContracts() throws Exception {
+        var pageable = org.springframework.data.domain.PageRequest.of(0, 20);
+        when(contractService.searchContracts(eq("Service"), eq(ContractStatus.UPLOADED), eq(FileType.PDF), eq(1L), eq(1L), any()))
+                .thenReturn(new org.springframework.data.domain.PageImpl<>(List.of(), pageable, 0));
+
+        mockMvc.perform(get("/api/v1/contracts/search")
+                        .param("title", "Service")
+                        .param("status", "UPLOADED")
+                        .param("fileType", "PDF")
+                        .param("clientId", "1")
+                        .param("uploadedById", "1"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
     void shouldUploadContract() throws Exception {
         when(contractService.uploadContract(any(), any(), any(), any())).thenReturn(new ContractResponse());
 

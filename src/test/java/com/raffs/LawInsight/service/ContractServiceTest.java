@@ -28,6 +28,7 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -187,6 +188,19 @@ class ContractServiceTest {
         when(contractMapper.toSummary(contract)).thenReturn(null);
 
         var result = contractService.findAll(pageable);
+
+        assertThat(result.getContent()).hasSize(1);
+    }
+
+    @Test
+    void shouldSearchContracts() {
+        var contract = createContract(createUser(), createClient());
+        var pageable = org.springframework.data.domain.PageRequest.of(0, 20);
+        when(contractRepository.findAll(any(org.springframework.data.jpa.domain.Specification.class), eq(pageable)))
+                .thenReturn(new org.springframework.data.domain.PageImpl<>(List.of(contract), pageable, 1));
+        when(contractMapper.toSummary(contract)).thenReturn(null);
+
+        var result = contractService.searchContracts("Test", ContractStatus.UPLOADED, FileType.PDF, 1L, 1L, pageable);
 
         assertThat(result.getContent()).hasSize(1);
     }

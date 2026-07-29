@@ -81,6 +81,19 @@ public class ContractService {
                 .map(contractMapper::toSummary);
     }
 
+    @Transactional(readOnly = true)
+    public Page<ContractSummary> searchContracts(
+            String title,
+            ContractStatus status,
+            FileType fileType,
+            Long clientId,
+            Long uploadedById,
+            Pageable pageable) {
+        var spec = com.raffs.LawInsight.repository.specification.ContractSpecification.filterBy(title, status, fileType, clientId, uploadedById);
+        return contractRepository.findAll(spec, pageable)
+                .map(contractMapper::toSummary);
+    }
+
     @Transactional
     public void deleteContract(Long id) {
         if (!contractRepository.existsById(id)) {
