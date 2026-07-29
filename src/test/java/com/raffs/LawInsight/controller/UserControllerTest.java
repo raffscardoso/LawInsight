@@ -26,6 +26,7 @@ class UserControllerTest {
     @BeforeEach
     void setUp() {
         mockMvc = MockMvcBuilders.standaloneSetup(new UserController(userService))
+                .setCustomArgumentResolvers(new org.springframework.data.web.PageableHandlerMethodArgumentResolver())
                 .setControllerAdvice(new GlobalExceptionHandler())
                 .build();
     }
@@ -76,6 +77,9 @@ class UserControllerTest {
 
     @Test
     void shouldFindAll() throws Exception {
+        var pageable = org.springframework.data.domain.PageRequest.of(0, 20);
+        when(userService.findAll(any())).thenReturn(new org.springframework.data.domain.PageImpl<>(java.util.List.of(), pageable, 0));
+
         mockMvc.perform(get("/api/v1/users"))
                 .andExpect(status().isOk());
     }

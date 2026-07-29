@@ -82,21 +82,23 @@ class ClientServiceTest {
     @Test
     void shouldFindAll() {
         var client = createClient();
-        when(clientRepository.findAll()).thenReturn(List.of(client));
+        var pageable = org.springframework.data.domain.PageRequest.of(0, 20);
+        when(clientRepository.findAll(pageable)).thenReturn(new org.springframework.data.domain.PageImpl<>(List.of(client), pageable, 1));
         when(clientMapper.toSummary(client)).thenReturn(new ClientSummary());
 
-        var result = clientService.findAll();
-        assertThat(result).hasSize(1);
+        var result = clientService.findAll(pageable);
+        assertThat(result.getContent()).hasSize(1);
     }
 
     @Test
     void shouldFindByName() {
         var client = createClient();
-        when(clientRepository.findByNameContainingIgnoreCase("Test")).thenReturn(List.of(client));
+        var pageable = org.springframework.data.domain.PageRequest.of(0, 20);
+        when(clientRepository.findByNameContainingIgnoreCase("Test", pageable)).thenReturn(new org.springframework.data.domain.PageImpl<>(List.of(client), pageable, 1));
         when(clientMapper.toSummary(client)).thenReturn(new ClientSummary());
 
-        var result = clientService.findByName("Test");
-        assertThat(result).hasSize(1);
+        var result = clientService.findByName("Test", pageable);
+        assertThat(result.getContent()).hasSize(1);
     }
 
     @Test

@@ -14,6 +14,8 @@ import com.raffs.LawInsight.repository.ClientRepository;
 import com.raffs.LawInsight.repository.ContractRepository;
 import com.raffs.LawInsight.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -61,10 +63,22 @@ public class ContractService {
     }
 
     @Transactional(readOnly = true)
+    public Page<ContractSummary> findByStatus(ContractStatus status, Pageable pageable) {
+        return contractRepository.findByStatus(status, pageable)
+                .map(contractMapper::toSummary);
+    }
+
+    @Transactional(readOnly = true)
     public List<ContractSummary> findAll() {
         return contractRepository.findAll().stream()
                 .map(contractMapper::toSummary)
                 .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public Page<ContractSummary> findAll(Pageable pageable) {
+        return contractRepository.findAll(pageable)
+                .map(contractMapper::toSummary);
     }
 
     @Transactional

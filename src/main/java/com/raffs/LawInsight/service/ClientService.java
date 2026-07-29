@@ -9,6 +9,8 @@ import com.raffs.LawInsight.exception.ResourceNotFoundException;
 import com.raffs.LawInsight.mapper.ClientMapper;
 import com.raffs.LawInsight.repository.ClientRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -43,6 +45,12 @@ public class ClientService {
     }
 
     @Transactional(readOnly = true)
+    public Page<ClientSummary> findAll(Pageable pageable) {
+        return clientRepository.findAll(pageable)
+                .map(clientMapper::toSummary);
+    }
+
+    @Transactional(readOnly = true)
     public List<ClientSummary> findByName(String name) {
         return clientRepository.findByNameContainingIgnoreCase(name).stream()
                 .map(clientMapper::toSummary)
@@ -50,10 +58,22 @@ public class ClientService {
     }
 
     @Transactional(readOnly = true)
+    public Page<ClientSummary> findByName(String name, Pageable pageable) {
+        return clientRepository.findByNameContainingIgnoreCase(name, pageable)
+                .map(clientMapper::toSummary);
+    }
+
+    @Transactional(readOnly = true)
     public List<ClientSummary> findByType(ClientType type) {
         return clientRepository.findByClientType(type).stream()
                 .map(clientMapper::toSummary)
                 .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public Page<ClientSummary> findByType(ClientType type, Pageable pageable) {
+        return clientRepository.findByClientType(type, pageable)
+                .map(clientMapper::toSummary);
     }
 
     @Transactional

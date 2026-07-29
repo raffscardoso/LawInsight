@@ -168,23 +168,27 @@ class ContractServiceTest {
     @Test
     void shouldFindByStatus() {
         var contract = createContract(createUser(), createClient());
-        when(contractRepository.findByStatus(ContractStatus.UPLOADED)).thenReturn(List.of(contract));
+        var pageable = org.springframework.data.domain.PageRequest.of(0, 20);
+        when(contractRepository.findByStatus(ContractStatus.UPLOADED, pageable))
+                .thenReturn(new org.springframework.data.domain.PageImpl<>(List.of(contract), pageable, 1));
         when(contractMapper.toSummary(contract)).thenReturn(null);
 
-        var result = contractService.findByStatus(ContractStatus.UPLOADED);
+        var result = contractService.findByStatus(ContractStatus.UPLOADED, pageable);
 
-        assertThat(result).hasSize(1);
+        assertThat(result.getContent()).hasSize(1);
     }
 
     @Test
     void shouldFindAll() {
         var contract = createContract(createUser(), createClient());
-        when(contractRepository.findAll()).thenReturn(List.of(contract));
+        var pageable = org.springframework.data.domain.PageRequest.of(0, 20);
+        when(contractRepository.findAll(pageable))
+                .thenReturn(new org.springframework.data.domain.PageImpl<>(List.of(contract), pageable, 1));
         when(contractMapper.toSummary(contract)).thenReturn(null);
 
-        var result = contractService.findAll();
+        var result = contractService.findAll(pageable);
 
-        assertThat(result).hasSize(1);
+        assertThat(result.getContent()).hasSize(1);
     }
 
     @Test

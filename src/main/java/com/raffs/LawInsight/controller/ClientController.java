@@ -7,6 +7,10 @@ import com.raffs.LawInsight.dto.ClientSummary;
 import com.raffs.LawInsight.service.ClientService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -41,16 +45,17 @@ public class ClientController {
     }
 
     @GetMapping
-    public ResponseEntity<List<ClientSummary>> findAll(
+    public ResponseEntity<Page<ClientSummary>> findAll(
             @RequestParam(required = false) String name,
-            @RequestParam(required = false) ClientType type) {
+            @RequestParam(required = false) ClientType type,
+            @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
         if (name != null) {
-            return ResponseEntity.ok(clientService.findByName(name));
+            return ResponseEntity.ok(clientService.findByName(name, pageable));
         }
         if (type != null) {
-            return ResponseEntity.ok(clientService.findByType(type));
+            return ResponseEntity.ok(clientService.findByType(type, pageable));
         }
-        return ResponseEntity.ok(clientService.findAll());
+        return ResponseEntity.ok(clientService.findAll(pageable));
     }
 
     @PutMapping("/{id}")

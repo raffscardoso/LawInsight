@@ -7,6 +7,10 @@ import com.raffs.LawInsight.dto.ContractSummary;
 import com.raffs.LawInsight.service.ContractService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -53,12 +57,13 @@ public class ContractController {
     }
 
     @GetMapping
-    public ResponseEntity<List<ContractSummary>> findAll(
-            @RequestParam(required = false) ContractStatus status) {
+    public ResponseEntity<Page<ContractSummary>> findAll(
+            @RequestParam(required = false) ContractStatus status,
+            @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
         if (status != null) {
-            return ResponseEntity.ok(contractService.findByStatus(status));
+            return ResponseEntity.ok(contractService.findByStatus(status, pageable));
         }
-        return ResponseEntity.ok(contractService.findAll());
+        return ResponseEntity.ok(contractService.findAll(pageable));
     }
 
     @DeleteMapping("/{id}")

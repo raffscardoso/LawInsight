@@ -105,21 +105,23 @@ class UserServiceTest {
     @Test
     void shouldFindAll() {
         var user = createUser();
-        when(userRepository.findAll()).thenReturn(List.of(user));
+        var pageable = org.springframework.data.domain.PageRequest.of(0, 20);
+        when(userRepository.findAll(pageable)).thenReturn(new org.springframework.data.domain.PageImpl<>(List.of(user), pageable, 1));
         when(userMapper.toResponse(user)).thenReturn(new UserResponse());
 
-        var result = userService.findAll();
-        assertThat(result).hasSize(1);
+        var result = userService.findAll(pageable);
+        assertThat(result.getContent()).hasSize(1);
     }
 
     @Test
     void shouldFindByRole() {
         var user = createUser();
-        when(userRepository.findByRole(UserRole.ATTORNEY)).thenReturn(List.of(user));
+        var pageable = org.springframework.data.domain.PageRequest.of(0, 20);
+        when(userRepository.findByRole(UserRole.ATTORNEY, pageable)).thenReturn(new org.springframework.data.domain.PageImpl<>(List.of(user), pageable, 1));
         when(userMapper.toResponse(user)).thenReturn(new UserResponse());
 
-        var result = userService.findByRole(UserRole.ATTORNEY);
-        assertThat(result).hasSize(1);
+        var result = userService.findByRole(UserRole.ATTORNEY, pageable);
+        assertThat(result.getContent()).hasSize(1);
     }
 
     @Test

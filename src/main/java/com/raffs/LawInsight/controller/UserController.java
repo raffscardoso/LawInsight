@@ -6,6 +6,10 @@ import com.raffs.LawInsight.dto.UserResponse;
 import com.raffs.LawInsight.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -39,12 +43,13 @@ public class UserController {
     }
 
     @GetMapping
-    public ResponseEntity<List<UserResponse>> findAll(
-            @RequestParam(required = false) UserRole role) {
+    public ResponseEntity<Page<UserResponse>> findAll(
+            @RequestParam(required = false) UserRole role,
+            @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
         if (role != null) {
-            return ResponseEntity.ok(userService.findByRole(role));
+            return ResponseEntity.ok(userService.findByRole(role, pageable));
         }
-        return ResponseEntity.ok(userService.findAll());
+        return ResponseEntity.ok(userService.findAll(pageable));
     }
 
     @DeleteMapping("/{id}")

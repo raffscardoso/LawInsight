@@ -7,6 +7,8 @@ import com.raffs.LawInsight.exception.ResourceNotFoundException;
 import com.raffs.LawInsight.mapper.UserMapper;
 import com.raffs.LawInsight.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -47,6 +49,12 @@ public class UserService {
     }
 
     @Transactional(readOnly = true)
+    public Page<UserResponse> findAll(Pageable pageable) {
+        return userRepository.findAll(pageable)
+                .map(userMapper::toResponse);
+    }
+
+    @Transactional(readOnly = true)
     public List<UserResponse> findByRole(UserRole role) {
         return userRepository.findByRole(role).stream()
                 .map(userMapper::toResponse)
@@ -54,10 +62,22 @@ public class UserService {
     }
 
     @Transactional(readOnly = true)
+    public Page<UserResponse> findByRole(UserRole role, Pageable pageable) {
+        return userRepository.findByRole(role, pageable)
+                .map(userMapper::toResponse);
+    }
+
+    @Transactional(readOnly = true)
     public List<UserResponse> findActive() {
         return userRepository.findByActiveTrue().stream()
                 .map(userMapper::toResponse)
                 .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public Page<UserResponse> findActive(Pageable pageable) {
+        return userRepository.findByActiveTrue(pageable)
+                .map(userMapper::toResponse);
     }
 
     @Transactional

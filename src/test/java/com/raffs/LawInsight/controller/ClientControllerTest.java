@@ -28,6 +28,7 @@ class ClientControllerTest {
     @BeforeEach
     void setUp() {
         mockMvc = MockMvcBuilders.standaloneSetup(new ClientController(clientService))
+                .setCustomArgumentResolvers(new org.springframework.data.web.PageableHandlerMethodArgumentResolver())
                 .setControllerAdvice(new GlobalExceptionHandler())
                 .build();
     }
@@ -76,6 +77,9 @@ class ClientControllerTest {
 
     @Test
     void shouldFindAll() throws Exception {
+        var pageable = org.springframework.data.domain.PageRequest.of(0, 20);
+        when(clientService.findAll(any())).thenReturn(new org.springframework.data.domain.PageImpl<>(java.util.List.of(), pageable, 0));
+
         mockMvc.perform(get("/api/v1/clients"))
                 .andExpect(status().isOk());
     }

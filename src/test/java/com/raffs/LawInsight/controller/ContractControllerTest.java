@@ -37,6 +37,7 @@ class ContractControllerTest {
     @BeforeEach
     void setUp() {
         mockMvc = MockMvcBuilders.standaloneSetup(new ContractController(contractService))
+                .setCustomArgumentResolvers(new org.springframework.data.web.PageableHandlerMethodArgumentResolver())
                 .setControllerAdvice(new GlobalExceptionHandler())
                 .build();
     }
@@ -101,12 +102,18 @@ class ContractControllerTest {
 
     @Test
     void shouldFindAll() throws Exception {
+        var pageable = org.springframework.data.domain.PageRequest.of(0, 20);
+        when(contractService.findAll(any())).thenReturn(new org.springframework.data.domain.PageImpl<>(List.of(), pageable, 0));
+
         mockMvc.perform(get("/api/v1/contracts"))
                 .andExpect(status().isOk());
     }
 
     @Test
     void shouldFindByStatus() throws Exception {
+        var pageable = org.springframework.data.domain.PageRequest.of(0, 20);
+        when(contractService.findByStatus(eq(ContractStatus.UPLOADED), any())).thenReturn(new org.springframework.data.domain.PageImpl<>(List.of(), pageable, 0));
+
         mockMvc.perform(get("/api/v1/contracts").param("status", "UPLOADED"))
                 .andExpect(status().isOk());
     }
