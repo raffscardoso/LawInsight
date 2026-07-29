@@ -35,6 +35,7 @@ public class ContractService {
     private final ClientRepository clientRepository;
     private final ContractMapper contractMapper;
     private final PdfExtractionService pdfExtractionService;
+    private final FileStorageService fileStorageService;
 
     @Transactional
     public ContractResponse createContract(ContractRequest request) {
@@ -96,8 +97,10 @@ public class ContractService {
 
     @Transactional
     public void deleteContract(Long id) {
-        if (!contractRepository.existsById(id)) {
-            throw new ResourceNotFoundException("Contract not found with id: " + id);
+        var contract = contractRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Contract not found with id: " + id));
+        if (contract.getFilePath() != null) {
+            fileStorageService.deleteFile(contract.getFilePath());
         }
         contractRepository.deleteById(id);
     }
@@ -109,6 +112,7 @@ public class ContractService {
         var client = clientRepository.findById(clientId)
                 .orElseThrow(() -> new ResourceNotFoundException("Client not found with id: " + clientId));
 
+        var storedFilePath = fileStorageService.storeFile(file);
         var content = extractContent(file);
         var hash = computeSha256(file);
         var fileType = resolveFileType(file);
@@ -118,6 +122,7 @@ public class ContractService {
         request.setOriginalFileName(file.getOriginalFilename());
         request.setFileType(fileType);
         request.setExtractedContent(content);
+        request.setFilePath(storedFilePath);
         request.setFileHash(hash);
         request.setUploadedById(uploadedById);
         request.setClientId(clientId);

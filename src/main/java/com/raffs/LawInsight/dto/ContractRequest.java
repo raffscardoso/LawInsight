@@ -30,6 +30,9 @@ public class ContractRequest {
     @Size(min = 64, max = 64)
     private String fileHash;
 
+    @Size(max = 500)
+    private String filePath;
+
     @NotNull
     private Long uploadedById;
 

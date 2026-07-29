@@ -53,6 +53,18 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
     }
 
+    @ExceptionHandler(com.raffs.LawInsight.exception.FileStorageException.class)
+    public ResponseEntity<ErrorResponse> handleFileStorage(com.raffs.LawInsight.exception.FileStorageException ex, HttpServletRequest request) {
+        var response = new ErrorResponse(
+                HttpStatus.BAD_REQUEST.value(),
+                "File Storage Error",
+                ex.getMessage(),
+                request.getRequestURI(),
+                List.of()
+        );
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGeneral(Exception ex, HttpServletRequest request) {
         var response = new ErrorResponse(

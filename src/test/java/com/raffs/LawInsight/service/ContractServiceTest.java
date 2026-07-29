@@ -52,6 +52,9 @@ class ContractServiceTest {
     @Mock
     private PdfExtractionService pdfExtractionService;
 
+    @Mock
+    private FileStorageService fileStorageService;
+
     @InjectMocks
     private ContractService contractService;
 
@@ -207,16 +210,19 @@ class ContractServiceTest {
 
     @Test
     void shouldDeleteContract() {
-        when(contractRepository.existsById(1L)).thenReturn(true);
+        var contract = createContract(createUser(), createClient());
+        contract.setFilePath("/path/to/file.pdf");
+        when(contractRepository.findById(1L)).thenReturn(Optional.of(contract));
 
         contractService.deleteContract(1L);
 
+        verify(fileStorageService).deleteFile("/path/to/file.pdf");
         verify(contractRepository).deleteById(1L);
     }
 
     @Test
     void shouldThrowWhenDeletingNonExistent() {
-        when(contractRepository.existsById(99L)).thenReturn(false);
+        when(contractRepository.findById(99L)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> contractService.deleteContract(99L))
                 .isInstanceOf(ResourceNotFoundException.class)
@@ -231,11 +237,13 @@ class ContractServiceTest {
 
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
         when(clientRepository.findById(1L)).thenReturn(Optional.of(client));
+        when(fileStorageService.storeFile(file)).thenReturn("/stored/agreement.pdf");
         when(pdfExtractionService.extractText(any())).thenReturn("extracted");
         when(contractMapper.toEntity(any(ContractRequest.class), any(User.class), any(Client.class))).thenAnswer(invocation -> {
             var req = invocation.<ContractRequest>getArgument(0);
             var c = new Contract();
             c.setTitle(req.getTitle());
+            c.setFilePath(req.getFilePath());
             c.setFileHash(req.getFileHash());
             c.setStatus(req.getStatus());
             c.setUploadedBy(invocation.getArgument(1));

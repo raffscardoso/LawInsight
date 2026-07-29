@@ -19,6 +19,7 @@ public class ContractMapper {
         contract.setOriginalFileName(request.getOriginalFileName());
         contract.setFileType(request.getFileType());
         contract.setExtractedContent(request.getExtractedContent());
+        contract.setFilePath(request.getFilePath());
         contract.setFileHash(request.getFileHash());
         contract.setUploadedBy(uploadedBy);
         contract.setClient(client);
