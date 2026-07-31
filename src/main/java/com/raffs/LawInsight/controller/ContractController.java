@@ -28,12 +28,15 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
+import com.raffs.LawInsight.service.ContractProcessingService;
+
 @RestController
 @RequestMapping("/api/v1/contracts")
 @RequiredArgsConstructor
 public class ContractController {
 
     private final ContractService contractService;
+    private final ContractProcessingService contractProcessingService;
 
     @PostMapping
     public ResponseEntity<ContractResponse> create(@Valid @RequestBody ContractRequest request) {
@@ -91,5 +94,11 @@ public class ContractController {
             @RequestParam ContractStatus status) {
         var response = contractService.updateStatus(id, status);
         return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/{id}/process")
+    public ResponseEntity<Void> processAsync(@PathVariable Long id) {
+        contractProcessingService.processContractAsync(id);
+        return ResponseEntity.accepted().build();
     }
 }

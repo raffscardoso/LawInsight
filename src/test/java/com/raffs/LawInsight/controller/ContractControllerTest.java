@@ -29,14 +29,18 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.raffs.LawInsight.service.ContractProcessingService;
+import static org.mockito.Mockito.verify;
+
 class ContractControllerTest {
 
     private final ContractService contractService = mock(ContractService.class);
+    private final ContractProcessingService contractProcessingService = mock(ContractProcessingService.class);
     private MockMvc mockMvc;
 
     @BeforeEach
     void setUp() {
-        mockMvc = MockMvcBuilders.standaloneSetup(new ContractController(contractService))
+        mockMvc = MockMvcBuilders.standaloneSetup(new ContractController(contractService, contractProcessingService))
                 .setCustomArgumentResolvers(new org.springframework.data.web.PageableHandlerMethodArgumentResolver())
                 .setControllerAdvice(new GlobalExceptionHandler())
                 .build();
@@ -170,5 +174,13 @@ class ContractControllerTest {
         mockMvc.perform(patch("/api/v1/contracts/1/status")
                         .param("status", "PROCESSED"))
                 .andExpect(status().isOk());
+    }
+
+    @Test
+    void shouldProcessContractAsync() throws Exception {
+        mockMvc.perform(post("/api/v1/contracts/1/process"))
+                .andExpect(status().isAccepted());
+
+        verify(contractProcessingService).processContractAsync(1L);
     }
 }
