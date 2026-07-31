@@ -13,6 +13,7 @@ import com.raffs.LawInsight.mapper.ContractMapper;
 import com.raffs.LawInsight.repository.ClientRepository;
 import com.raffs.LawInsight.repository.ContractRepository;
 import com.raffs.LawInsight.repository.UserRepository;
+import com.raffs.LawInsight.repository.specification.ContractSpecification;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -90,7 +91,7 @@ public class ContractService {
             Long clientId,
             Long uploadedById,
             Pageable pageable) {
-        var spec = com.raffs.LawInsight.repository.specification.ContractSpecification.filterBy(title, status, fileType, clientId, uploadedById);
+        var spec = ContractSpecification.filterBy(title, status, fileType, clientId, uploadedById);
         return contractRepository.findAll(spec, pageable)
                 .map(contractMapper::toSummary);
     }
