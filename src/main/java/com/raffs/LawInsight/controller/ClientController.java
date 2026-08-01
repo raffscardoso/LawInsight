@@ -33,18 +33,21 @@ public class ClientController {
     private final ClientService clientService;
 
     @PostMapping
+    @org.springframework.security.access.prepost.PreAuthorize("hasAnyRole('ADMIN', 'ATTORNEY')")
     public ResponseEntity<ClientResponse> create(@Valid @RequestBody ClientRequest request) {
         var response = clientService.create(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @GetMapping("/{id}")
+    @org.springframework.security.access.prepost.PreAuthorize("hasAnyRole('ADMIN', 'ATTORNEY', 'PARALEGAL', 'ASSISTANT')")
     public ResponseEntity<ClientResponse> findById(@PathVariable Long id) {
         var response = clientService.findById(id);
         return ResponseEntity.ok(response);
     }
 
     @GetMapping
+    @org.springframework.security.access.prepost.PreAuthorize("hasAnyRole('ADMIN', 'ATTORNEY', 'PARALEGAL', 'ASSISTANT')")
     public ResponseEntity<Page<ClientSummary>> findAll(
             @RequestParam(required = false) String name,
             @RequestParam(required = false) ClientType type,
@@ -59,12 +62,14 @@ public class ClientController {
     }
 
     @PutMapping("/{id}")
+    @org.springframework.security.access.prepost.PreAuthorize("hasAnyRole('ADMIN', 'ATTORNEY')")
     public ResponseEntity<ClientResponse> update(@PathVariable Long id, @Valid @RequestBody ClientRequest request) {
         var response = clientService.update(id, request);
         return ResponseEntity.ok(response);
     }
 
     @DeleteMapping("/{id}")
+    @org.springframework.security.access.prepost.PreAuthorize("hasAnyRole('ADMIN', 'ATTORNEY')")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         clientService.delete(id);
         return ResponseEntity.noContent().build();
