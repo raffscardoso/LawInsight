@@ -135,23 +135,26 @@ public class ContractService {
     }
 
     private String extractContent(MultipartFile file) {
-        try {
-            var bytes = file.getBytes();
+        try (var inputStream = file.getInputStream()) {
             var name = file.getOriginalFilename();
             if (name != null && name.toLowerCase().endsWith(".pdf")) {
-                return pdfExtractionService.extractText(bytes);
+                return pdfExtractionService.extractText(inputStream.readAllBytes());
             }
-            return new String(bytes);
+            return new String(inputStream.readAllBytes(), java.nio.charset.StandardCharsets.UTF_8);
         } catch (IOException e) {
             throw new RuntimeException("Failed to read uploaded file", e);
         }
     }
 
     private String computeSha256(MultipartFile file) {
-        try {
+        try (var inputStream = file.getInputStream()) {
             var digest = MessageDigest.getInstance("SHA-256");
-            var hash = digest.digest(file.getBytes());
-            return HexFormat.of().formatHex(hash);
+            byte[] buffer = new byte[8192];
+            int bytesRead;
+            while ((bytesRead = inputStream.read(buffer)) != -1) {
+                digest.update(buffer, 0, bytesRead);
+            }
+            return HexFormat.of().formatHex(digest.digest());
         } catch (NoSuchAlgorithmException | IOException e) {
             throw new RuntimeException("Failed to compute file hash", e);
         }

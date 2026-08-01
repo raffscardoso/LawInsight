@@ -79,12 +79,21 @@ class FileStorageServiceTest {
     }
 
     @Test
-    void shouldThrowExceptionWhenLoadingNonexistentFile() {
-        var nonExistentPath = tempDir.resolve("non_existent_file.pdf").toString();
+    void shouldThrowExceptionWhenLoadingPathTraversalFile() {
+        var outsidePath = tempDir.getParent().resolve("outside.pdf").toString();
 
-        assertThatThrownBy(() -> fileStorageService.loadFileAsResource(nonExistentPath))
+        assertThatThrownBy(() -> fileStorageService.loadFileAsResource(outsidePath))
                 .isInstanceOf(FileStorageException.class)
-                .hasMessageContaining("File not found");
+                .hasMessageContaining("Access denied");
+    }
+
+    @Test
+    void shouldThrowExceptionWhenDeletingPathTraversalFile() {
+        var outsidePath = tempDir.getParent().resolve("outside.pdf").toString();
+
+        assertThatThrownBy(() -> fileStorageService.deleteFile(outsidePath))
+                .isInstanceOf(FileStorageException.class)
+                .hasMessageContaining("Access denied");
     }
 
     @Test

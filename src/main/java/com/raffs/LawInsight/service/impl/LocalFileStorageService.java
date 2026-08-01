@@ -68,6 +68,9 @@ public class LocalFileStorageService implements FileStorageService {
     public Resource loadFileAsResource(String filePath) {
         try {
             Path path = Paths.get(filePath).normalize();
+            if (!path.startsWith(this.fileStorageLocation)) {
+                throw new FileStorageException("Access denied: File path outside storage location.");
+            }
             Resource resource = new UrlResource(path.toUri());
             if (resource.exists() && resource.isReadable()) {
                 return resource;
@@ -86,6 +89,9 @@ public class LocalFileStorageService implements FileStorageService {
         }
         try {
             Path path = Paths.get(filePath).normalize();
+            if (!path.startsWith(this.fileStorageLocation)) {
+                throw new FileStorageException("Access denied: File path outside storage location.");
+            }
             Files.deleteIfExists(path);
         } catch (IOException ex) {
             throw new FileStorageException("Could not delete file at path: " + filePath, ex);
