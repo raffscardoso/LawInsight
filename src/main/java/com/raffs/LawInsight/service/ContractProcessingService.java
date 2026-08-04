@@ -14,6 +14,19 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.concurrent.CompletableFuture;
 
+import com.raffs.LawInsight.domain.ContractClause;
+import com.raffs.LawInsight.domain.ExtractedKeyword;
+import com.raffs.LawInsight.domain.RiskAssessment;
+import com.raffs.LawInsight.domain.enumeration.KeywordType;
+import com.raffs.LawInsight.domain.enumeration.RiskAssessmentType;
+import com.raffs.LawInsight.domain.enumeration.RiskLevel;
+import com.raffs.LawInsight.repository.ContractClauseRepository;
+import com.raffs.LawInsight.repository.ExtractedKeywordRepository;
+import com.raffs.LawInsight.repository.RiskAssessmentRepository;
+import java.time.Instant;
+import java.util.List;
+import java.util.stream.Collectors;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -21,6 +34,12 @@ public class ContractProcessingService {
 
     private final ContractRepository contractRepository;
     private final ContractMapper contractMapper;
+    private final ClauseAnalysisService clauseAnalysisService;
+    private final RiskAssessmentService riskAssessmentService;
+    private final KeywordExtractionService keywordExtractionService;
+    private final ContractClauseRepository clauseRepository;
+    private final RiskAssessmentRepository riskRepository;
+    private final ExtractedKeywordRepository keywordRepository;
 
     @Async("taskExecutor")
     @Transactional
@@ -60,6 +79,46 @@ public class ContractProcessingService {
         if (contract.getExtractedContent() == null || contract.getExtractedContent().isBlank()) {
             throw new IllegalArgumentException("Cannot process contract with empty content");
         }
-        // Simulated parsing step (to be extended with Spring AI pipeline in Marco 4)
+        String text = contract.getExtractedContent();
+        
+        List<String> clauses = clauseAnalysisService.extractClauses(text);
+        List<String> risks = riskAssessmentService.assessRisk(text);
+        List<String> keywords = keywordExtractionService.extractKeywords(text);
+        
+        int i = 1;
+        List<ContractClause> clauseEntities = new java.util.ArrayList<>();
+        for (String c : clauses) {
+            ContractClause clause = new ContractClause();
+            clause.setContract(contract);
+            clause.setContent(c);
+            clause.setNumber(i++);
+            clause.setTitle("Extracted Clause " + clause.getNumber());
+            clause.setRiskLevel(RiskLevel.LOW);
+            clauseEntities.add(clause);
+        }
+        clauseRepository.saveAll(clauseEntities);
+        
+        List<RiskAssessment> riskEntities = new java.util.ArrayList<>();
+        for (String r : risks) {
+            RiskAssessment risk = new RiskAssessment();
+            risk.setContract(contract);
+            risk.setDescription(r);
+            risk.setRiskLevel(RiskLevel.MEDIUM);
+            risk.setType(RiskAssessmentType.GENERAL);
+            risk.setAssessedAt(Instant.now());
+            riskEntities.add(risk);
+        }
+        riskRepository.saveAll(riskEntities);
+        
+        List<ExtractedKeyword> keywordEntities = new java.util.ArrayList<>();
+        for (String k : keywords) {
+            ExtractedKeyword keyword = new ExtractedKeyword();
+            keyword.setContract(contract);
+            keyword.setKeyword(k);
+            keyword.setType(KeywordType.OTHER);
+            keyword.setConfidence(1.0);
+            keywordEntities.add(keyword);
+        }
+        keywordRepository.saveAll(keywordEntities);
     }
 }

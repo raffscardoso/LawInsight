@@ -11,6 +11,14 @@ spring:
       ddl-auto: validate
     show-sql: false
 
+  ai:
+    openai:
+      base-url: "https://generativelanguage.googleapis.com/v1beta/openai/"
+      api-key: ${GEMINI_API_KEY}
+      chat:
+        options:
+          model: "gemini-1.5-flash"
+
 app:
   jwt:
     secret: 404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970

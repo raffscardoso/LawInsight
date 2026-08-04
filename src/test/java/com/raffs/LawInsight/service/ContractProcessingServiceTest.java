@@ -36,6 +36,24 @@ class ContractProcessingServiceTest {
     @Mock
     private ContractMapper contractMapper;
 
+    @Mock
+    private ClauseAnalysisService clauseAnalysisService;
+
+    @Mock
+    private RiskAssessmentService riskAssessmentService;
+
+    @Mock
+    private KeywordExtractionService keywordExtractionService;
+
+    @Mock
+    private com.raffs.LawInsight.repository.ContractClauseRepository clauseRepository;
+
+    @Mock
+    private com.raffs.LawInsight.repository.RiskAssessmentRepository riskRepository;
+
+    @Mock
+    private com.raffs.LawInsight.repository.ExtractedKeywordRepository keywordRepository;
+
     @InjectMocks
     private ContractProcessingService processingService;
 
@@ -62,6 +80,10 @@ class ContractProcessingServiceTest {
             return c;
         });
         when(contractMapper.toResponse(any(Contract.class))).thenReturn(new ContractResponse());
+        
+        when(clauseAnalysisService.extractClauses("Confidential information shall be kept secret.")).thenReturn(java.util.List.of("Confidentiality Clause"));
+        when(riskAssessmentService.assessRisk("Confidential information shall be kept secret.")).thenReturn(java.util.List.of("High Risk: vague terms"));
+        when(keywordExtractionService.extractKeywords("Confidential information shall be kept secret.")).thenReturn(java.util.List.of("Confidentiality"));
 
         CompletableFuture<ContractResponse> future = processingService.processContractAsync(1L);
         ContractResponse response = future.get();
@@ -69,6 +91,10 @@ class ContractProcessingServiceTest {
         assertThat(response).isNotNull();
         assertThat(sampleContract.getStatus()).isEqualTo(ContractStatus.PROCESSED);
         assertThat(savedStatuses).contains(ContractStatus.PROCESSING, ContractStatus.PROCESSED);
+        
+        verify(clauseRepository).saveAll(any());
+        verify(riskRepository).saveAll(any());
+        verify(keywordRepository).saveAll(any());
     }
 
     @Test
