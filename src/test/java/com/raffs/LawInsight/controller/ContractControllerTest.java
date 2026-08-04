@@ -13,6 +13,9 @@ import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.Authentication;
 
 import java.util.List;
 
@@ -139,13 +142,18 @@ class ContractControllerTest {
 
     @Test
     void shouldUploadContract() throws Exception {
-        when(contractService.uploadContract(any(), any(), any(), any())).thenReturn(new ContractResponse());
+        Authentication auth = mock(Authentication.class);
+        when(auth.getName()).thenReturn("attorney@law.com");
+        SecurityContext context = mock(SecurityContext.class);
+        when(context.getAuthentication()).thenReturn(auth);
+        SecurityContextHolder.setContext(context);
+
+        when(contractService.uploadContract(any(), eq("attorney@law.com"), any(), any())).thenReturn(new ContractResponse());
 
         var file = new MockMultipartFile("file", "contract.pdf", "application/pdf", "dummy".getBytes());
 
         mockMvc.perform(multipart("/api/v1/contracts/upload")
                         .file(file)
-                        .param("uploadedById", "1")
                         .param("clientId", "1")
                         .param("title", "Uploaded Contract"))
                 .andExpect(status().isCreated());

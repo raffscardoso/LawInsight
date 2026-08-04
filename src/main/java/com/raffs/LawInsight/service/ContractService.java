@@ -107,9 +107,9 @@ public class ContractService {
     }
 
     @Transactional
-    public ContractResponse uploadContract(MultipartFile file, Long uploadedById, Long clientId, String title) {
-        var uploadedBy = userRepository.findById(uploadedById)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + uploadedById));
+    public ContractResponse uploadContract(MultipartFile file, String uploadedByEmail, Long clientId, String title) {
+        var uploadedBy = userRepository.findByEmail(uploadedByEmail)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with email: " + uploadedByEmail));
         var client = clientRepository.findById(clientId)
                 .orElseThrow(() -> new ResourceNotFoundException("Client not found with id: " + clientId));
 
@@ -125,7 +125,7 @@ public class ContractService {
         request.setExtractedContent(content);
         request.setFilePath(storedFilePath);
         request.setFileHash(hash);
-        request.setUploadedById(uploadedById);
+        request.setUploadedById(uploadedBy.getId());
         request.setClientId(clientId);
         request.setStatus(ContractStatus.UPLOADED);
 

@@ -42,7 +42,6 @@ public class ContractProcessingService {
     private final ExtractedKeywordRepository keywordRepository;
 
     @Async("taskExecutor")
-    @Transactional
     public CompletableFuture<ContractResponse> processContractAsync(Long contractId) {
         log.info("Starting asynchronous processing for contract ID: {}", contractId);
 
@@ -85,40 +84,40 @@ public class ContractProcessingService {
         List<String> risks = riskAssessmentService.assessRisk(text);
         List<String> keywords = keywordExtractionService.extractKeywords(text);
         
-        int i = 1;
-        List<ContractClause> clauseEntities = new java.util.ArrayList<>();
-        for (String c : clauses) {
+        // Save Clauses
+        java.util.concurrent.atomic.AtomicInteger counter = new java.util.concurrent.atomic.AtomicInteger(1);
+        List<ContractClause> clauseEntities = clauses.stream().map(c -> {
             ContractClause clause = new ContractClause();
             clause.setContract(contract);
             clause.setContent(c);
-            clause.setNumber(i++);
+            clause.setNumber(counter.getAndIncrement());
             clause.setTitle("Extracted Clause " + clause.getNumber());
             clause.setRiskLevel(RiskLevel.LOW);
-            clauseEntities.add(clause);
-        }
+            return clause;
+        }).toList();
         clauseRepository.saveAll(clauseEntities);
         
-        List<RiskAssessment> riskEntities = new java.util.ArrayList<>();
-        for (String r : risks) {
+        // Save Risks
+        List<RiskAssessment> riskEntities = risks.stream().map(r -> {
             RiskAssessment risk = new RiskAssessment();
             risk.setContract(contract);
             risk.setDescription(r);
             risk.setRiskLevel(RiskLevel.MEDIUM);
             risk.setType(RiskAssessmentType.GENERAL);
             risk.setAssessedAt(Instant.now());
-            riskEntities.add(risk);
-        }
+            return risk;
+        }).toList();
         riskRepository.saveAll(riskEntities);
         
-        List<ExtractedKeyword> keywordEntities = new java.util.ArrayList<>();
-        for (String k : keywords) {
+        // Save Keywords
+        List<ExtractedKeyword> keywordEntities = keywords.stream().map(k -> {
             ExtractedKeyword keyword = new ExtractedKeyword();
             keyword.setContract(contract);
             keyword.setKeyword(k);
             keyword.setType(KeywordType.OTHER);
             keyword.setConfidence(1.0);
-            keywordEntities.add(keyword);
-        }
+            return keyword;
+        }).toList();
         keywordRepository.saveAll(keywordEntities);
     }
 }

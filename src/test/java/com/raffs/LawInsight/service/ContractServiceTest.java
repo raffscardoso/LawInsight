@@ -235,7 +235,7 @@ class ContractServiceTest {
         var client = createClient();
         var file = new MockMultipartFile("file", "agreement.pdf", "application/pdf", "dummy content".getBytes());
 
-        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(userRepository.findByEmail("attorney@law.com")).thenReturn(Optional.of(user));
         when(clientRepository.findById(1L)).thenReturn(Optional.of(client));
         when(fileStorageService.storeFile(file)).thenReturn("/stored/agreement.pdf");
         when(pdfExtractionService.extractText(any())).thenReturn("extracted");
@@ -257,7 +257,7 @@ class ContractServiceTest {
         });
         when(contractMapper.toResponse(any(Contract.class))).thenReturn(new ContractResponse());
 
-        var result = contractService.uploadContract(file, 1L, 1L, "Custom Title");
+        var result = contractService.uploadContract(file, "attorney@law.com", 1L, "Custom Title");
 
         assertThat(result).isNotNull();
         var captor = ArgumentCaptor.forClass(Contract.class);

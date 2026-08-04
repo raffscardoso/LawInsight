@@ -48,10 +48,10 @@ public class ContractController {
     @PreAuthorize("hasAnyRole('ADMIN', 'ATTORNEY', 'PARALEGAL')")
     public ResponseEntity<ContractResponse> upload(
             @RequestParam("file") MultipartFile file,
-            @RequestParam("uploadedById") Long uploadedById,
             @RequestParam("clientId") Long clientId,
             @RequestParam(required = false) String title) {
-        var response = contractService.uploadContract(file, uploadedById, clientId, title);
+        String currentUserEmail = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication().getName();
+        var response = contractService.uploadContract(file, currentUserEmail, clientId, title);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
