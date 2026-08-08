@@ -27,6 +27,8 @@ import java.time.Instant;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import com.raffs.LawInsight.dto.SseEvent;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -39,7 +41,8 @@ public class ContractProcessingService {
     private final KeywordExtractionService keywordExtractionService;
     private final ContractClauseRepository clauseRepository;
     private final RiskAssessmentRepository riskRepository;
-    private final ExtractedKeywordRepository keywordRepository;
+    private final com.raffs.LawInsight.repository.ExtractedKeywordRepository keywordRepository;
+    private final SseService sseService;
 
     @Async("taskExecutor")
     public CompletableFuture<ContractResponse> processContractAsync(Long contractId) {
@@ -52,6 +55,12 @@ public class ContractProcessingService {
             // Transition status to PROCESSING
             contract.setStatus(ContractStatus.PROCESSING);
             contract = contractRepository.save(contract);
+            
+            sseService.emitEvent(contractId, SseEvent.builder()
+                    .contractId(contractId)
+                    .status(ContractStatus.PROCESSING)
+                    .message("Started AI analysis...")
+                    .build());
 
             // Orchestration pipeline logic (content validation / parsing stubs)
             performContractAnalysis(contract);
@@ -59,6 +68,12 @@ public class ContractProcessingService {
             // Transition status to PROCESSED
             contract.setStatus(ContractStatus.PROCESSED);
             contract = contractRepository.save(contract);
+            
+            sseService.emitEvent(contractId, SseEvent.builder()
+                    .contractId(contractId)
+                    .status(ContractStatus.PROCESSED)
+                    .message("Contract fully processed successfully.")
+                    .build());
 
             log.info("Successfully completed async processing for contract ID: {}", contractId);
             return CompletableFuture.completedFuture(contractMapper.toResponse(contract));
@@ -67,6 +82,12 @@ public class ContractProcessingService {
             try {
                 contract.setStatus(ContractStatus.FAILED);
                 contractRepository.save(contract);
+                
+                sseService.emitEvent(contractId, SseEvent.builder()
+                        .contractId(contractId)
+                        .status(ContractStatus.FAILED)
+                        .message("Processing failed: " + ex.getMessage())
+                        .build());
             } catch (Exception saveEx) {
                 log.error("Failed to update status to FAILED for contract ID: {}", contractId, saveEx);
             }
@@ -80,8 +101,25 @@ public class ContractProcessingService {
         }
         String text = contract.getExtractedContent();
         
+        sseService.emitEvent(contract.getId(), SseEvent.builder()
+                .contractId(contract.getId())
+                .status(ContractStatus.PROCESSING)
+                .message("Extracting clauses...")
+                .build());
         List<String> clauses = clauseAnalysisService.extractClauses(text);
+        
+        sseService.emitEvent(contract.getId(), SseEvent.builder()
+                .contractId(contract.getId())
+                .status(ContractStatus.PROCESSING)
+                .message("Assessing risks...")
+                .build());
         List<String> risks = riskAssessmentService.assessRisk(text);
+        
+        sseService.emitEvent(contract.getId(), SseEvent.builder()
+                .contractId(contract.getId())
+                .status(ContractStatus.PROCESSING)
+                .message("Extracting keywords...")
+                .build());
         List<String> keywords = keywordExtractionService.extractKeywords(text);
         
         // Save Clauses

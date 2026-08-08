@@ -35,15 +35,20 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.raffs.LawInsight.service.ContractProcessingService;
 import static org.mockito.Mockito.verify;
 
+import com.raffs.LawInsight.service.SseService;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
+import static org.mockito.Mockito.verify;
+
 class ContractControllerTest {
 
     private final ContractService contractService = mock(ContractService.class);
     private final ContractProcessingService contractProcessingService = mock(ContractProcessingService.class);
+    private final SseService sseService = mock(SseService.class);
     private MockMvc mockMvc;
 
     @BeforeEach
     void setUp() {
-        mockMvc = MockMvcBuilders.standaloneSetup(new ContractController(contractService, contractProcessingService))
+        mockMvc = MockMvcBuilders.standaloneSetup(new ContractController(contractService, contractProcessingService, sseService))
                 .setCustomArgumentResolvers(new org.springframework.data.web.PageableHandlerMethodArgumentResolver())
                 .setControllerAdvice(new GlobalExceptionHandler())
                 .build();
@@ -190,5 +195,13 @@ class ContractControllerTest {
                 .andExpect(status().isAccepted());
 
         verify(contractProcessingService).processContractAsync(1L);
+    }
+
+    @Test
+    void shouldStreamStatus() throws Exception {
+        mockMvc.perform(get("/api/v1/contracts/1/status/stream"))
+                .andExpect(status().isOk());
+                
+        verify(sseService).register(eq(1L), any(SseEmitter.class));
     }
 }

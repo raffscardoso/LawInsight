@@ -23,6 +23,7 @@ import java.util.concurrent.CompletableFuture;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -53,6 +54,9 @@ class ContractProcessingServiceTest {
 
     @Mock
     private com.raffs.LawInsight.repository.ExtractedKeywordRepository keywordRepository;
+
+    @Mock
+    private SseService sseService;
 
     @InjectMocks
     private ContractProcessingService processingService;
@@ -95,6 +99,8 @@ class ContractProcessingServiceTest {
         verify(clauseRepository).saveAll(any());
         verify(riskRepository).saveAll(any());
         verify(keywordRepository).saveAll(any());
+        
+        verify(sseService, atLeastOnce()).emitEvent(eq(1L), any(com.raffs.LawInsight.dto.SseEvent.class));
     }
 
     @Test

@@ -26,8 +26,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import com.raffs.LawInsight.service.ContractProcessingService;
+import com.raffs.LawInsight.service.SseService;
 
 @RestController
 @RequestMapping("/api/v1/contracts")
@@ -36,6 +38,7 @@ public class ContractController {
 
     private final ContractService contractService;
     private final ContractProcessingService contractProcessingService;
+    private final SseService sseService;
 
     @PostMapping
     @PreAuthorize("hasAnyRole('ADMIN', 'ATTORNEY', 'PARALEGAL')")
@@ -107,5 +110,13 @@ public class ContractController {
     public ResponseEntity<Void> processAsync(@PathVariable Long id) {
         contractProcessingService.processContractAsync(id);
         return ResponseEntity.accepted().build();
+    }
+
+    @GetMapping(value = "/{id}/status/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    @PreAuthorize("hasAnyRole('ADMIN', 'ATTORNEY', 'PARALEGAL')")
+    public ResponseEntity<SseEmitter> streamStatus(@PathVariable Long id) {
+        SseEmitter emitter = new SseEmitter(5 * 60 * 1000L); // 5 minute timeout
+        sseService.register(id, emitter);
+        return ResponseEntity.ok(emitter);
     }
 }
